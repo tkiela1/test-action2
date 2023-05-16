@@ -2,7 +2,7 @@
 
 I wanted to perform GitHub OAuth from GitHub Pages but we can't expose the App's client secret. This means we need a backend service to authenticate with. We could use lambda functions or just spin up a server but I wanted to use ONLY GitHub products.
 
-And so the idea to run authentication within GitHub Actions!
+And so the idea was to run authentication within GitHub Actions!
 
 # Call a Workflow like a lambda function
 The first step is to figure out how to run a workflow like a lambda function. 

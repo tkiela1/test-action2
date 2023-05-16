@@ -20,7 +20,7 @@ jobs:
           result-encoding: string
           script: |
             const { code } = process.env;
-            const response = await fetch("/api/github/oauth/token", {
+            const response = await fetch("https://api.github.com/api/github/oauth/token", {
               method: "POST",
               headers: {
                 "content-type": "application/json",

@@ -4,7 +4,7 @@ const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
 // This TOKEN is a fine-grained PAT with ONLY actions:write permissions on ONLY a single repo
-const TOKEN = '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';
+const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';

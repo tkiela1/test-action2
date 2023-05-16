@@ -15,6 +15,9 @@ So our first problem is that we need to authenticate to call the workflow API bu
 
 So great we commit out fine grained PAT to the code in our repo but it immedietly goes to expired. This is GitHub Secret Scanning trying to protect you. To get around this we can base64 encode/decode our PAT.
 
+> **Warning**
+> ** This can technically be abused as this token could be extracted from the code and then used manually to lookup other user's workflow runs. These workflow runs contain the user token which should not be shared. This is why this solution should only be used in cases were this scenario is palletable. Let's say internally in a private repo. **
+
 ## `workflow_dispatch`
 
 We have the [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) as a starting point.

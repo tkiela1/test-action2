@@ -2,9 +2,26 @@ name: Login
 
 on:
   workflow_dispatch:
+    inputs:
+      code:
+        description: 'Temporary GitHub code from App authorization'
+        required: true
 
 jobs:
   login:
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'Login'
+      - uses: actions/github-script@v6
+        id: login-script
+        with:
+          result-encoding: string
+          script: |
+            const response = await fetch("/api/github/oauth/token", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ code }),
+            });
+            const { token } = await response.json();
+            return token;

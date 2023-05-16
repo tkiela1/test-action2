@@ -1,0 +1,10 @@
+name: Login
+
+on:
+  workflow_dispatch:
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Login'

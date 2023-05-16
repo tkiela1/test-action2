@@ -1,61 +1,95 @@
-// get the code from the url param
 const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
-// This TOKEN is a fine-grained PAT with ONLY actions:write permissions on ONLY a single repo
-const TOKEN = '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';
+const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';
+const headers = {
+    Accept: 'application/vnd.github+json',
+    Authorization: `Bearer ${TOKEN}`
+}
 
-fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`, {
-    method: 'POST',
-    headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${TOKEN}`
-    },
-    body: JSON.stringify({
-        ref: 'main',
-        inputs: {
-            code: code
-        }
-    })
-}).then(data => {
-    // in a loop get the runs that have been created since now minus 5 minutes (the delta is to avoid any issue with timings): using GET https://api.github.com/repos/$OWNER/$REPO/actions/runs?created=>$run_date_filter
-    fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs?created=>${new Date(Date.now() - 3 * 60 * 1000).toISOString()}`, {
+const getRuns = async () => {
+    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs?created=>${new Date(Date.now() - 3 * 60 * 1000).toISOString()}`, {
         method: 'GET',
-        headers: {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': `Bearer ${TOKEN}`
-        }
-    }).then(response => response.json()).then(async data => {
-        console.log(data.workflow_runs);
-        for (const run of data.workflow_runs) {
-            console.log('getting', run)
-            await fetch(run.jobs_url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/vnd.github+json',
-                    'Authorization': `Bearer ${TOKEN}`
-                }
-            }).then(response => response.json()).then(data => {
-                console.log(data);
-                data.jobs.forEach(job => {
-                    if (job.conclusion === 'success') {
-                        const loginStep = job.steps.find(step => step.name === 'Login');
-                        if (loginStep.conclusion === 'success') {
-                            console.log('Login successful 🥳');
-                        } else {
-                            console.log('Login failed!');
-                        }
-                    } else if (job.conclusion === 'failure') {
-                        console.log('Job failed!')
-                    } else {
-                        console.log('Job is still running...');
-                    }
-                })
-            });
-        }
+        headers
     });
-});
+    const data = await response.json();
+    return data.workflow_runs;
+}
+
+const getJobs = async (jobsUrl) => {
+    const response = await fetch(jobsUrl, {
+        method: 'GET',
+        headers
+    });
+    const data = await response.json();
+    return data.jobs;
+}
+
+const findJob = async () => {
+    let foundJob = null;
+    let retries = 0;
+    while (foundJob === null && retries < 5) {
+        const runs = await getRuns();
+        console.log('runs', runs)
+        for (const run of runs) {
+            console.log('getting', run)
+            const jobs = await getJobs(run.jobs_url);
+            for (const job of jobs) {
+                if (job.conclusion === 'success') {
+                    const loginStep = job.steps.find(step => step.name === 'Login');
+                    if (loginStep.conclusion === 'success') {
+                        console.log('Login successful 🥳');
+                    } else {
+                        console.log('Login failed!');
+                    }
+                } else if (job.conclusion === 'failure') {
+                    console.log('Job failed!')
+                } else {
+                    console.log('Job is still running...');
+                }
+                if (job.conclusion === 'success') {
+                    foundJob = job;
+                    break;
+                }
+            }
+            if (foundJob) break;
+        }
+        if (foundJob) break;
+        retries++;
+        await new Promise(r => setTimeout(r, 5000));
+    }
+    return foundJob;
+}
+
+const dispatchWorkflow = async () => {
+    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            ref: 'main',
+            inputs: {
+                code: code
+            }
+        })
+    });
+    if (!response.ok) throw new Error(response.statusText);
+    return response;
+}
+
+const main = async () => {
+    await dispatchWorkflow();
+    const job = await findJob();
+    console.log('FOUD JOB:', job);
+    if (job) {
+        const step = job.steps.find(step => step.name === 'Login');
+        if (step) {
+            console.log('STEP:', step);
+        }
+    }
+}
+
+main();

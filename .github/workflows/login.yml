@@ -10,6 +10,8 @@ on:
 jobs:
   login:
     runs-on: ubuntu-latest
+    outputs:
+      token: ${{ steps.login-script.outputs.result }}
     steps:
       - name: Login
         uses: actions/github-script@v6

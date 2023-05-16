@@ -39,6 +39,6 @@ jobs:
             result = await response.json();
             const token = result.access_token
             if (!token) core.setFailed(result.error_description);
-            return atob(token);
+            return decodeURIComponent(escape(window.atob(token)));
       - name: Result
         run: echo ${{ steps.login-script.outputs.result }}

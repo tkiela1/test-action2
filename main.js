@@ -2,11 +2,14 @@ const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
+
 const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFGTEM2NlkwYVhuU1JUMlhsOFNkXzI3Qk5WN2tkZXlGampMSjlaUkdmNUpNclU5Yk5laWV3YjAya05NdGM5ODNXM0FJWjVBR3JIVXl1azM5';
 const TOKEN = atob(TOKEN_BASE64);
+
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';
+
 const LOGIN_HEADERS = {
     Authorization: `Bearer ${TOKEN}`
 }
@@ -16,9 +19,8 @@ const STEP_NUMBER = 3;
 const STEP_NAME = 'Result';
 const FILE_NAME = `${JOB_NAME}/${STEP_NUMBER}_${STEP_NAME}.txt`
 
-const MINS_TO_LOOK_BACK = 2;
-const getRuns = async () => {
-    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs?created=>${new Date(Date.now() - MINS_TO_LOOK_BACK * 60 * 1000).toISOString()}`, {
+const getRuns = async (minsToLookBack = 3) => {
+    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs?created=>${new Date(Date.now() - minsToLookBack * 60 * 1000).toISOString()}`, {
         method: 'GET',
         headers: LOGIN_HEADERS
     });
@@ -60,57 +62,53 @@ const getWorkflowRunLogs = async (runId, fileName) => {
     return text;
 }
 
-const maxRetries = 12;
-const retryInterval = 5000;
-const findJob = async () => {
-    let foundJob = null;
+const findWorkflowRun = async (uid, retryMax = 12, retryInterval = 5000) => {
+    let foundWorkflowRun = null;
     let retries = 0;
 
-    while (foundJob === null && retries < maxRetries) {
+    while (!foundWorkflowRun && retries < retryMax) {
         const runs = await getRuns();
+        console.log('runs', runs);
         for (const run of runs) {
+            const createdAtTime = new Date(run.created_at);
             const jobs = await getJobs(run.jobs_url);
             for (const job of jobs) {
-                console.log(`Job ${job.name} is`, job)
                 if (job.conclusion === 'success') {
-                    const loginStep = job.steps.find(step => step.name === 'Login');
-                    if (loginStep.conclusion === 'success') {
-                        console.log('Login successful 🥳');
-                    } else {
-                        console.log('Login failed!');
+                    const uidStep = job.steps.find(step => step.name === uid);
+                    if (uidStep) {
+                        foundWorkflowRun = job;
                     }
+                    break;
                 } else if (job.conclusion === 'failure') {
                     console.log('Job failed!')
-                } else {
-                    console.log('Job is still running...');
-                }
-                if (job.conclusion === 'success') {
-                    foundJob = job;
                     break;
+                } else {
+                    console.log(`Job ${job.name} is ${job.status}`)
                 }
             }
-            if (foundJob) break;
+            if (foundWorkflowRun) break;
         }
-        if (foundJob) break;
+        if (foundWorkflowRun) break;
         retries++;
         await new Promise(r => setTimeout(r, retryInterval));
     }
-    return foundJob;
+    return foundWorkflowRun;
 }
 
-const dispatchWorkflow = async () => {
+const dispatchWorkflow = async (uid = Math.random().toString(16).slice(2)) => {
     const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`, {
         method: 'POST',
         headers: LOGIN_HEADERS,
         body: JSON.stringify({
             ref: 'main',
             inputs: {
-                code: code
+                code,
+                uid
             }
         })
     });
     if (!response.ok) throw new Error((await response.json()).message);
-    return response;
+    return uid;
 }
 
 const getTokenFromLogs = async (runId, fileName) => {
@@ -128,8 +126,8 @@ const getTokenFromLogs = async (runId, fileName) => {
 }
 
 const main = async () => {
-    await dispatchWorkflow();
-    const job = await findJob();
+    const uid = await dispatchWorkflow();
+    const job = await findWorkflowRun(uid);
     if (job) {
         const token = await getTokenFromLogs(job.run_id, FILE_NAME);
         const user = await getUser(token);

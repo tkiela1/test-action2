@@ -6,6 +6,9 @@ on:
       code:
         description: 'Temporary GitHub code from App authorization'
         required: true
+      uid:
+        description: 'Unique ID for the request'
+        required: true
 
 jobs:
   login:
@@ -13,7 +16,7 @@ jobs:
     outputs:
       token: ${{ steps.login-script.outputs.result }}
     steps:
-      - name: Login
+      - name: ${{ inputs.uid }}
         uses: actions/github-script@v6
         id: login-script
         env:

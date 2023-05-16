@@ -36,10 +36,8 @@ jobs:
                 code
               }),
             });
-            console.log(response)
             result = await response.json();
-            console.log(result)
-            const token = result.token
+            const token = result.access_token
             if (!token) core.setFailed(result.error_description);
             return token;
       - name: Result

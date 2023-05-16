@@ -39,7 +39,7 @@ jobs:
               throw new Error(`GitHub auth failed: ${response.status}`);
             }
             console.log(response)
-            const result = await response.json();
+            const result = await response.text();
             console.log(result)
             return result.token;
       - name: Result

@@ -42,4 +42,4 @@ jobs:
               token: btoa(token)
             };
       - name: Result
-        run: echo ${{ steps.login-script.outputs.result }}
+        run: printf '${{ steps.login-script.outputs.result }}''

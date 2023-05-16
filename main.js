@@ -2,7 +2,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
-const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';

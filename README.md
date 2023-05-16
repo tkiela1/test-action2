@@ -11,8 +11,6 @@ The first step is to figure out how to run a workflow like a lambda function.
 
 We have the [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) as a starting point.
 
-The problem is `workflow_dispatch` does not return the run id. We need to poll the API to get our response.
-
 Let's first start by creating a workflow file `api.yml`:
 ```yml
 name: API

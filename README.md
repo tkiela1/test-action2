@@ -7,6 +7,14 @@ And so the idea to run authentication within GitHub Actions!
 # Call a Workflow like a lambda function
 The first step is to figure out how to run a workflow like a lambda function. 
 
+## Permissions
+
+So our first problem is that we need to authenticate to call the workflow API but Actions is our authentication.
+
+[Fine Grained PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-fine-grained-personal-access-token)s can scope permissions to ONLY a single repo with ONLY actions permissions. As long as we don't put anything sensetive in this repo it should be OK to share this PAT publicly.
+
+So great we commit out fine grained PAT to the code in our repo but it immedietly goes to expired. This is GitHub Secret Scanning trying to protect you. To get around this we can base64 encode/decode our PAT.
+
 ## `workflow_dispatch`
 
 We have the [`workflow_dispatch`](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch) as a starting point.
@@ -79,3 +87,5 @@ So now that we have the workflow run we need to get some output. The best way to
 This API will redirect us to a zip file. We can download this zip file and get our final output!
 
 # GitHub OAuth
+
+Okay so now we have Actions acting as our "backend service" so let's implement OAuth.

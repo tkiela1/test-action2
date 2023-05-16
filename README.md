@@ -13,7 +13,7 @@ So our first problem is that we need to authenticate to call the workflow API bu
 
 [Fine Grained PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-fine-grained-personal-access-token)s can scope permissions to ONLY a single repo with ONLY actions permissions. As long as we don't put anything sensetive in this repo it should be OK to share this PAT publicly.
 
-So great we commit out fine grained PAT to the code in our repo but it immedietly goes to expired. This is GitHub Secret Scanning trying to protect you. To get around this we can base64 encode/decode our PAT.
+So great we commit our fine grained PAT to the code in our repo but it immedietly goes to expired. This is GitHub Secret Scanning trying to protect you. To get around this we can base64 encode/decode our PAT.
 
 > **Warning**
 > This can technically be abused as this token could be extracted from the code and then used manually to lookup other user's workflow runs. These workflow runs contain the user token which should not be shared. This is why this solution should only be used in cases were this scenario is palletable. Let's say internally in a private repo.

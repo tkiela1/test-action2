@@ -28,12 +28,12 @@ jobs:
               method: "POST",
               headers: {
                 "content-type": "application/json",
+                accept: "application/json",
               },
               body: JSON.stringify({
                 client_id,
                 client_secret,
-                code,
-                accept: "json"
+                code
               }),
             });
             if (!response.ok) {

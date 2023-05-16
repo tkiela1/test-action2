@@ -11,7 +11,8 @@ jobs:
   login:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v6
+      - name: Login
+        uses: actions/github-script@v6
         id: login-script
         with:
           result-encoding: string

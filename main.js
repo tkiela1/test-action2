@@ -58,40 +58,40 @@ const getWorkflowRunLogs = async (runId, fileName) => {
     const blob = await response.blob();
     const files = await (new zip.ZipReader(new zip.BlobReader(blob))).getEntries({ filenameEncoding: "utf-8" });
     const file = files.find(file => file.filename === fileName);
+    if (!file) throw new Error(`File ${fileName} not found in downloaded log zip`);
     const text = await file.getData(new zip.TextWriter());
     return text;
 }
 
-const findWorkflowRun = async (uid, retryMax = 12, retryInterval = 5000) => {
+const waitForRunToFinish = (run) => {
+    return new Promise((resolve) => {
+        const interval = setInterval(async () => {
+            const jobs = await getJobs(run.jobs_url);
+            const job = jobs.find(job => job.name === JOB_NAME);
+            if (job.status === 'completed') {
+                clearInterval(interval);
+                setTimeout(() => resolve(job), 1000);
+            }
+        }, 1000);
+    });
+}
+
+const findWorkflowRun = async (uid, retryMax = 12, retryInterval = 2000) => {
     let foundWorkflowRun = null;
     let retries = 0;
 
-    while (!foundWorkflowRun && retries < retryMax) {
+    do {
         const runs = await getRuns();
-        console.log('runs', runs);
-        for (const run of runs) {
-            const createdAtTime = new Date(run.created_at);
+        const promises = await Promise.all(runs.map(async (run) => {
             const jobs = await getJobs(run.jobs_url);
-            for (const job of jobs) {
-                if (job.conclusion === 'success') {
-                    const uidStep = job.steps.find(step => step.name === uid);
-                    if (uidStep) {
-                        foundWorkflowRun = job;
-                    }
-                    break;
-                } else if (job.conclusion === 'failure') {
-                    console.log('Job failed!')
-                    break;
-                } else {
-                    console.log(`Job ${job.name} is ${job.status}`)
-                }
-            }
-            if (foundWorkflowRun) break;
-        }
-        if (foundWorkflowRun) break;
+            const foundJ = jobs.find(job => job.steps.find(step => step.name === uid));
+            return foundJ ? run : undefined;
+        }));
+        foundWorkflowRun = promises.find(promise => promise);
         retries++;
-        await new Promise(r => setTimeout(r, retryInterval));
-    }
+        if (!foundWorkflowRun) await new Promise(r => setTimeout(r, retryInterval));
+    } while (!foundWorkflowRun && retries < retryMax);
+
     return foundWorkflowRun;
 }
 
@@ -126,12 +126,26 @@ const getTokenFromLogs = async (runId, fileName) => {
 }
 
 const main = async () => {
+    console.log('dispatching workflow...')
     const uid = await dispatchWorkflow();
-    const job = await findWorkflowRun(uid);
-    if (job) {
+    console.log(`dispatched workflow with uid ${uid}`);
+
+    console.log('finding workflow run...');
+    const run = await findWorkflowRun(uid);
+    console.log(`found workflow run ${run.id}`);
+
+    console.log('waiting for run to finish...');
+    const job = await waitForRunToFinish(run);
+
+    if (job.conclusion === 'success') {
+        console.log('getting token from logs...');
         const token = await getTokenFromLogs(job.run_id, FILE_NAME);
+        
+        console.log('getting user...');
         const user = await getUser(token);
-        console.log(user);
+        console.log(`logged in as ${user.login}`);
+    } else {
+        console.error('login failed')
     }
 }
 

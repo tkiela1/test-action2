@@ -17,6 +17,7 @@ jobs:
         with:
           result-encoding: string
           script: |
+            const code = core.getInput('code', { required: true });
             const response = await fetch("/api/github/oauth/token", {
               method: "POST",
               headers: {

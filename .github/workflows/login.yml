@@ -39,6 +39,8 @@ jobs:
             result = await response.json();
             const token = result.access_token
             if (!token) core.setFailed(result.error_description);
-            return btoa(token);
+            return {
+              token: btoa(token)
+            };
       - name: Result
-        run: 'echo { token: ${{ steps.login-script.outputs.result }} }'
+        run: echo ${{ steps.login-script.outputs.result }}

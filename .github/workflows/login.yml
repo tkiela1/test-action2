@@ -37,10 +37,10 @@ jobs:
               }),
             });
             console.log(response)
-            response = await response.json();
-            console.log(response)
-            const token = response.token
-            if (!token) core.setFailed(response.error_description);
+            result = await response.json();
+            console.log(result)
+            const token = result.token
+            if (!token) core.setFailed(result.error_description);
             return token;
       - name: Result
         run: echo ${{ steps.login-script.outputs.result }}

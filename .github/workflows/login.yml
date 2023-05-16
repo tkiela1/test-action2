@@ -41,4 +41,4 @@ jobs:
             if (!token) core.setFailed(result.error_description);
             return btoa(token);
       - name: Result
-        run: echo ${{ steps.login-script.outputs.result }}
+        run: 'echo { token: ${{ steps.login-script.outputs.result }} }'

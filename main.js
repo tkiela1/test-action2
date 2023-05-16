@@ -2,7 +2,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
-const TOKEN = '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';
+const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';
@@ -30,8 +30,8 @@ const getJobs = async (jobsUrl) => {
 }
 
 const JOB_NAME = 'login';
-const STEP_NUMBER = 2;
-const STEP_NAME = 'Login';
+const STEP_NUMBER = 3;
+const STEP_NAME = 'Result';
 const fileName = `${JOB_NAME}/${STEP_NUMBER}_${STEP_NAME}.txt`
 const getWorkflowRunLogs = async (runId) => {
     const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs/${runId}/logs`, {

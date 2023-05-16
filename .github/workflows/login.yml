@@ -14,10 +14,12 @@ jobs:
       - name: Login
         uses: actions/github-script@v6
         id: login-script
+        env:
+          code: ${{ inputs.code }}
         with:
           result-encoding: string
           script: |
-            const code = core.getInput('code', { required: true });
+            const { code } = process.env;
             const response = await fetch("/api/github/oauth/token", {
               method: "POST",
               headers: {

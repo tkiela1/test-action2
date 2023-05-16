@@ -4,7 +4,7 @@ const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
 // This TOKEN is a fine-grained PAT with ONLY actions:write permissions on ONLY a single repo
-const TOKEN = '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';
+const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';
@@ -42,11 +42,17 @@ fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispat
             }).then(response => response.json()).then(data => {
                 console.log(data);
                 data.jobs.forEach(job => {
-                    const loginStep = job.steps.find(step => step.name === 'Login');
-                    if (loginStep.conclusion === 'success') {
-                        console.log('Login successful 🥳');
+                    if (job.conclusion === 'success') {
+                        const loginStep = job.steps.find(step => step.name === 'Login');
+                        if (loginStep.conclusion === 'success') {
+                            console.log('Login successful 🥳');
+                        } else {
+                            console.log('Login failed!');
+                        }
+                    } else if (job.conclusion === 'failure') {
+                        console.log('Job failed!')
                     } else {
-                        console.log('Login failed!');
+                        console.log('Job is still running...');
                     }
                 })
             });

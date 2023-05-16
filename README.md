@@ -88,4 +88,92 @@ This API will redirect us to a zip file. We can download this zip file and get o
 
 # GitHub OAuth
 
-Okay so now we have Actions acting as our "backend service" so let's implement OAuth.
+Okay so now we have Actions acting as our "backend service" so let's implement [OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authenticating-to-the-rest-api-with-an-oauth-app).
+
+Start by [creating a GitHub App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app). Use the same redirect URL as the HTTP server where you are doing development. This could be localhost or GitHub Pages.
+
+We need to direct the user to `/login/oauth/authorize?scope=user:email&client_id=${CLIENT_ID}` where `${CLIENT_ID}` is the client_id from our GitHub App.
+
+After approval the user will be redirect back to the redirect URL you specified with a new URL parameter `code` which is used in subsequent requests.
+
+Let's create a basic `index.html` file with a login link using our client id:
+```html
+<html>
+  <head>
+    <script src="zip.js"></script>
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <p>
+      Well, hello there!
+    </p>
+    <p>
+      We're going to now talk to the GitHub API. Ready?
+      <a href="https://github.com/login/oauth/authorize?scope=user:email&client_id=Iv1.bc38b449a74116b3">Click here</a> to begin!
+    </p>
+    <p>
+      If that link doesn't work, remember to provide your own <a href="/apps/building-oauth-apps/authorizing-oauth-apps/">Client ID</a>!
+    </p>
+  </body>
+</html>
+```
+
+You now need to parse the code and from the URL parameter.
+
+Now the next request to get our token requires the `CLIENT_SECRET` which can't be stored on the front end. This is where the GitHub Actions solution we takled about before comes in.
+
+Let's update our workflow file to include the login. We need a new input code and some logic to perform the login request. Then we simply print the token to the logs so we can grab it later.
+```yml
+name: Login
+
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: 'Temporary GitHub code from App authorization'
+        required: true
+      uid:
+        description: 'Unique ID for the request'
+        required: true
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    outputs:
+      token: ${{ steps.login-script.outputs.result }}
+    steps:
+      - name: ${{ inputs.uid }}
+        uses: actions/github-script@v6
+        id: login-script
+        env:
+          code: ${{ inputs.code }}
+          client_id: ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
+        with:
+          script: |
+            const { code, client_id, client_secret } = process.env;
+            const response = await fetch("https://github.com/login/oauth/access_token", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                accept: "application/json",
+              },
+              body: JSON.stringify({
+                client_id,
+                client_secret,
+                code
+              }),
+            });
+            result = await response.json();
+            const token = result.access_token
+            if (!token) core.setFailed(result.error_description);
+            return {
+              token: btoa(token)
+            };
+      - name: Result
+        run: printf '${{ steps.login-script.outputs.result }}'
+```
+
+So now we can call GET [`/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`]() again but this time pass the installation code as the input `code`. The result of the workflow should contain a GitHub token with the requested permissions.
+
+That's it! Now you have a token and can create whatever you'd like in GitHub Pages using the GitHub API.

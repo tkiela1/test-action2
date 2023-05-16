@@ -39,7 +39,7 @@ jobs:
             console.log(response)
             response = await response.json();
             console.log(response)
-            token = response.token
+            const token = response.token
             if (!token) core.setFailed(response.error_description);
             return token;
       - name: Result

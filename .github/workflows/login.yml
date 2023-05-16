@@ -31,3 +31,5 @@ jobs:
             });
             const { token } = await response.json();
             return token;
+      - name: Result
+        run: echo ${{ steps.login-script.outputs.result }}

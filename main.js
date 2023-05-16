@@ -2,7 +2,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
-const TOKEN = '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';
+const TOKEN = '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';
 const OWNER = 'austenstone';
 const REPO = 'github-actions-oauth';
 const WORKFLOW_ID = 'login.yml';
@@ -29,6 +29,37 @@ const getJobs = async (jobsUrl) => {
     return data.jobs;
 }
 
+const JOB_NAME = 'login';
+const STEP_NUMBER = 2;
+const STEP_NAME = 'Login';
+const fileName = `${JOB_NAME}/${STEP_NUMBER}_${STEP_NAME}.txt`
+const getWorkflowRunLogs = async (runId) => {
+    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/actions/runs/${runId}/logs`, {
+        method: 'GET',
+        headers
+    });
+    const blob = await response.blob();
+
+
+    const zipEntries = (new zip.ZipReader(new zip.BlobReader(blob))).getEntries({ filenameEncoding: "utf-8" });
+    const files = await zipEntries;
+    const file = files.find(file => file.filename === fileName);
+    const text = await file.getData(new zip.TextWriter());
+    console.log('TEXT:', text);
+    // console.log(response.headers.get('Location'))
+    // if (response.status === 302) {
+    //     const redirectUrl = response.headers.get('Location');
+    //     const response = await fetch(redirectUrl, {
+    //         method: 'GET',
+    //         headers
+    //     });
+    //     const data = await response.text();
+    //     return data;
+    // } else {
+    //     throw new Error('Failed to get logs');
+    // }
+}
+
 const findJob = async () => {
     let foundJob = null;
     let retries = 0;
@@ -36,9 +67,10 @@ const findJob = async () => {
         const runs = await getRuns();
         console.log('runs', runs)
         for (const run of runs) {
-            console.log('getting', run)
             const jobs = await getJobs(run.jobs_url);
             for (const job of jobs) {
+                console.log(job)
+                console.log(`Job ${job.name} is ${job.conclusion}`)
                 if (job.conclusion === 'success') {
                     const loginStep = job.steps.find(step => step.name === 'Login');
                     if (loginStep.conclusion === 'success') {
@@ -76,19 +108,25 @@ const dispatchWorkflow = async () => {
             }
         })
     });
-    if (!response.ok) throw new Error(response.statusText);
+    if (!response.ok) throw new Error((await response.json()).message);
     return response;
 }
 
 const main = async () => {
-    await dispatchWorkflow();
-    const job = await findJob();
-    console.log('FOUD JOB:', job);
-    if (job) {
-        const step = job.steps.find(step => step.name === 'Login');
-        if (step) {
-            console.log('STEP:', step);
+    try {
+        await dispatchWorkflow();
+        const job = await findJob();
+        console.log('FOUD JOB:', job);
+        if (job) {
+            const step = job.steps.find(step => step.name === 'Login');
+            if (step) {
+                console.log('STEP:', step);
+            }
+            const runLogs = await getWorkflowRunLogs(job.run_id);
+            console.log('RUN LOGS:', runLogs);
         }
+    } catch (error) {
+        console.error(error);
     }
 }
 

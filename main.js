@@ -3,7 +3,7 @@ const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
 
-const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFGTEM2NlkwYVhuU1JUMlhsOFNkXzI3Qk5WN2tkZXlGampMSjlaUkdmNUpNclU5Yk5laWV3YjAya05NdGM5ODNXM0FJWjVBR3JIVXl1azM5';
+const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFGTEM2NlkwRXgxUER6V1NBUjVNX2hJM2Izb3QyQlg5MXBUUWdsSVBuSVVrUHdrMVpkTUFaejdCY3pQUGJjR2lFM0dOWVYyVUtuVzFiMFY3';
 const TOKEN = atob(TOKEN_BASE64);
 
 const OWNER = 'austenstone';

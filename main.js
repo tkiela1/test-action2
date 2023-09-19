@@ -3,11 +3,11 @@ const code = urlParams.get('code');
 
 const BASEURL = 'https://api.github.com';
 
-const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFGTEM2NlkwRXgxUER6V1NBUjVNX2hJM2Izb3QyQlg5MXBUUWdsSVBuSVVrUHdrMVpkTUFaejdCY3pQUGJjR2lFM0dOWVYyVUtuVzFiMFY3';
+const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUE0UExUNVEwWkIzeFJNVW1xdkVaX2RqekNDclpJZnk0aElyT2ZuMnlkYXJRSEVsS1dKdkM5ZDVSZHlud3FweWdPV1lTT0xSVXBkeGxEc2d0Cg==';
 const TOKEN = atob(TOKEN_BASE64);
 
-const OWNER = 'austenstone';
-const REPO = 'github-actions-oauth';
+const OWNER = 'tkiela1';
+const REPO = 'test-action2';
 const WORKFLOW_ID = 'login.yml';
 
 const LOGIN_HEADERS = {
